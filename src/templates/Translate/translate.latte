@@ -1,0 +1,12 @@
+{* Latte template *}
+
+{block content}
+    <h2>{_'translate.menu.translate'}</h2>
+    
+    {include menu.latte}
+
+    <p>
+        <strong>{_'translate.source'}</strong><br />
+        {$translate['text']}
+    </p>
+    {control formTranslate}

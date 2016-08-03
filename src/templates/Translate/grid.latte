@@ -1,0 +1,38 @@
+{control formFilter}
+{if $visualPaginator->getPaginator()->getItemCount() == 0}
+    <p>{$emptyText}</p>
+{else}
+    <table class="grid">
+        <tr>
+            {foreach $columns as $column}
+                <th>
+                    <a n:href="setOrder, $column->getColumn()" n:tag-if="$column->getOrdering()">{$column->getName()}</a>
+                    <img n:if="$order == $column->getColumn() && $column->getOrdering()" src="/images/admin/table-sort-{$orderDir|lower}.png" />
+                </th>
+                <th class="ordering" n:if="$iterator->isFirst() && !is_null($ordering)">{_'admin.grid.changeOrder'}</th>
+            {/foreach}
+            <th n:if="count($menu) > 0"></th>
+        </tr>
+        <tr n:foreach="$model as $row" n:class="$iterator->isLast() ? last">
+            {php $isFirst = $iterator->isFirst()}
+            {php $isLast = $iterator->isLast()}
+            {foreach $columns as $column}
+                <td n:class="$iterator->isFirst() ? first">{$column->output($row)}</td>
+                <td n:if="$iterator->isFirst() && !is_null($ordering)" class="ordering">
+                    <a n:if="!$isLast" href="{$control->getParent()->link($ordering, array('id' => $row['id'], 'order' => 'down'))}">
+                        <img src="/images/admin/ordering-down.png" />
+                    </a>
+                    <a n:if="!$isFirst" href="{$control->getParent()->link($ordering, array('id' => $row['id'], 'order' => 'up'))}">
+                        <img src="/images/admin/ordering-up.png" />
+                    </a>
+                </td>
+            {/foreach}
+            <td n:if="count($menu) > 0">
+                {foreach $menu as $item}
+                    {$item->render($row)}
+                {/foreach}
+            </td>
+        </tr>
+    </table>
+    {control vp}
+{/if}

@@ -1,0 +1,9 @@
+translate: "Překlady"
+text: "Text"
+summary: "Přehled překladů"
+source: "Zdrojový text:"
+translated: "Přeloženo"
+grid:
+    translate: "Překlad"
+menu:
+    translate: "Přeložit"
