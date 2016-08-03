@@ -58,6 +58,12 @@ class generateTranslation extends Command
 	 * @var string
 	 */
 	private $outputDir;
+        
+        /**
+         *
+         * @var string
+         */
+        private $langDir;
 
         private $defaultOutputFormat = 'php';
         
@@ -66,6 +72,12 @@ class generateTranslation extends Command
          * @var \App\Model\Module\Translate
          */
         private $translates;
+        
+        /**
+         *
+         * @var \App\Model\Module\Language
+         */
+        private $languages;
 
 	protected function configure()
 	{
@@ -73,7 +85,8 @@ class generateTranslation extends Command
 			->setDescription('Extracts strings from application to translation files')
 			->addOption('scan-dir', 'd', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, "The directory to parse the translations. Can contain %placeholders%.", ['%appDir%/FrontModule'])
 			->addOption('output-format', 'f', InputOption::VALUE_REQUIRED, "Format name of the messages.", $this->defaultOutputFormat)
-			->addOption('output-dir', 'o', InputOption::VALUE_OPTIONAL, "Directory to write the messages to. Can contain %placeholders%.", $this->defaultOutputDir);
+			->addOption('output-dir', 'o', InputOption::VALUE_OPTIONAL, "Directory to write the messages to. Can contain %placeholders%.", $this->defaultOutputDir)
+                        ->addOption('lang-dir', 'l', InputOption::VALUE_OPTIONAL, "Directory to write the messages to. Can contain %placeholders%.", '%appDir%/lang');
 			// todo: append
 	}
 
@@ -85,6 +98,7 @@ class generateTranslation extends Command
 		$this->writer = $this->getHelper('container')->getByType('Symfony\Component\Translation\Writer\TranslationWriter');
 		$this->extractor = $this->getHelper('container')->getByType('Symfony\Component\Translation\Extractor\ChainExtractor');
                 $this->translates = $this->getHelper('container')->getByType('App\Model\Module\Translate');
+                $this->languages = $this->getHelper('container')->getByType('App\Model\Module\Language');
 		$this->serviceLocator = $this->getHelper('container')->getContainer();
 	}
 
@@ -110,6 +124,12 @@ class generateTranslation extends Command
 
 		if (!is_dir($this->outputDir = $this->serviceLocator->expand($input->getOption('output-dir'))) || !is_writable($this->outputDir)) {
 			$output->writeln(sprintf('<error>Given --output-dir "%s" does not exists or is not writable.</error>', $this->outputDir));
+
+			return FALSE;
+		}
+                
+                if (!is_dir($this->langDir = $this->serviceLocator->expand($input->getOption('lang-dir'))) || !is_writable($this->langDir)) {
+			$output->writeln(sprintf('<error>Given --output-dir "%s" does not exists or is not writable.</error>', $this->langDir));
 
 			return FALSE;
 		}
@@ -151,9 +171,8 @@ class generateTranslation extends Command
                 $output->writeln('');
 		$output->writeln(sprintf('<info>Zapisuji do DB</info>'));
                 
-                $toTranslate = include dirname(__FILE__) . '/../../temp/lang/messages.' . $defaultLocale . '.php';
-                
-                $texts = array();
+                $toTranslate = include dirname(__FILE__) . '/../../../../../temp/lang/messages.' . $defaultLocale . '.php';
+                $texts = array('');
                 foreach($toTranslate as $translate){
                     $texts[] = $translate;
                     $trans = $this->translates->where('text', $translate)->fetch();
@@ -162,6 +181,20 @@ class generateTranslation extends Command
                     }
                 }
                 $this->translates->where('NOT text', $texts)->delete();
+                
+                $language = $this->languages->where('translate_locale', $defaultLocale)->fetch();
+                $catalogue = new MessageCatalogue($language['translate_locale']);
+                foreach($this->translates->getAll() as $translate){
+                    $translatesLocale = $translate->related('translate_locale')->where('language_id', $language['id'])->fetch();
+                    if($translatesLocale){
+                        $catalogue->set($translate['text'], $translatesLocale['translate']);
+                    }else{
+                        $catalogue->set($translate['text'], $translate['text']);
+                    }
+                }
+                $this->writer->writeTranslations($catalogue, 'neon', [
+                    'path' => $this->langDir,
+                ]);
                 
             	return 0;
 	}
