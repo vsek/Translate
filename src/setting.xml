@@ -1,0 +1,6 @@
+<setting>
+    <presenter>
+        <name>Translate</name>
+        <resource>translate</resource>
+    </presenter>
+</setting>

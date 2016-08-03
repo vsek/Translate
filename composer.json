@@ -1,0 +1,15 @@
+{
+	"name": "vsek/translate",
+	"description": "Modul pro překlady",
+	"authors": [
+		{
+			"name": "Václav Stodůlka"
+		},
+		{
+			"name": "Web No Limit",
+			"homepage": "http://www.webnolimit.cz/"
+		}
+	],
+        "type": "project",
+	"license": ["BSD-3-Clause", "GPL-2.0", "GPL-3.0"]
+}
