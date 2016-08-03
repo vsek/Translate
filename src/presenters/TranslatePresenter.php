@@ -35,6 +35,12 @@ class TranslatePresenter extends BasePresenterM{
      */
     public $writer;
     
+    /**
+     * @inject
+     * @var \Kdyby\Translation\CatalogueCompiler
+     */
+    public $catalogeCompiler;
+    
     public function submitFormTranslate(Form $form){
         $values = $form->getValues();
         
@@ -66,6 +72,8 @@ class TranslatePresenter extends BasePresenterM{
         $this->writer->writeTranslations($catalogue, 'neon', [
             'path' => $this->context->parameters['appDir'] . '/lang/',
         ]);
+        
+        $this->catalogeCompiler->invalidateCache();
         
         $this->flashMessage($this->translator->trans('translate.translated'));
         $this->redirect('this');

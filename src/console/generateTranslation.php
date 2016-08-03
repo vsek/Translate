@@ -78,6 +78,12 @@ class generateTranslation extends Command
          * @var \App\Model\Module\Language
          */
         private $languages;
+        
+        /**
+         *
+         * @var Kdyby\Translation\CatalogueCompiler;
+         */
+        private $catalogeCompiler;
 
 	protected function configure()
 	{
@@ -99,6 +105,7 @@ class generateTranslation extends Command
 		$this->extractor = $this->getHelper('container')->getByType('Symfony\Component\Translation\Extractor\ChainExtractor');
                 $this->translates = $this->getHelper('container')->getByType('App\Model\Module\Translate');
                 $this->languages = $this->getHelper('container')->getByType('App\Model\Module\Language');
+                $this->catalogeCompiler = $this->getHelper('container')->getByType('Kdyby\Translation\CatalogueCompiler');
 		$this->serviceLocator = $this->getHelper('container')->getContainer();
 	}
 
@@ -195,6 +202,8 @@ class generateTranslation extends Command
                 $this->writer->writeTranslations($catalogue, 'neon', [
                     'path' => $this->langDir,
                 ]);
+                
+                $this->catalogeCompiler->invalidateCache();
                 
             	return 0;
 	}
