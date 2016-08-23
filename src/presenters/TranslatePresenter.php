@@ -110,8 +110,8 @@ class TranslatePresenter extends BasePresenterM{
         }
     }
     
-    protected function createComponentGrid(){
-        $grid = new GridTranslate();
+    protected function createComponentGrid($name){
+        $grid = new GridTranslate($this, $name);
 
         $grid->setModel($this->model->getAll());
         $grid->addColumn(new Column('text', $this->translator->translate('translate.text')));
