@@ -47,6 +47,7 @@ class PhpExtractor extends \Nette\Object implements ExtractorInterface{
         $pInfo = pathinfo($file);
         $tokens = token_get_all(file_get_contents($file));
         $data = array();
+        $next = false;
         foreach ($tokens as $c)
         {
             if(is_array($c)) {
