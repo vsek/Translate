@@ -15,7 +15,7 @@ use Symfony\Component\Translation\MessageCatalogue;
  *
  * @author vsek
  */
-class TranslatePresenter extends BasePresenterM{
+class TranslatePresenterM extends BasePresenterM{
     
     /** @var \App\Model\Module\TranslateLocale @inject */
     public $translatesLocale;
@@ -27,7 +27,7 @@ class TranslatePresenter extends BasePresenterM{
      *
      * @var \Nette\Database\Table\ActiveRow
      */
-    private $row = null;
+    protected $row = null;
     
     /**
      * @inject
@@ -40,6 +40,14 @@ class TranslatePresenter extends BasePresenterM{
      * @var \Kdyby\Translation\CatalogueCompiler
      */
     public $catalogeCompiler;
+    
+    public function actionNew(){
+        $this->template->setFile(dirname(__FILE__) . '/../templates/Translate/new.latte');
+    }
+    
+    public function actionDefault(){
+        $this->template->setFile(dirname(__FILE__) . '/../templates/Translate/default.latte');
+    }
     
     public function submitFormTranslate(Form $form){
         $values = $form->getValues();
@@ -100,6 +108,7 @@ class TranslatePresenter extends BasePresenterM{
     public function actionTranslate($id){
         $this->exist($id);
         $this->template->translate = $this->row;
+        $this->template->setFile(dirname(__FILE__) . '/../templates/Translate/translate.latte');
     }
     
     private function exist($id){
