@@ -111,7 +111,7 @@ class TranslatePresenterM extends BasePresenterM{
         $this->template->setFile(dirname(__FILE__) . '/../templates/Translate/translate.latte');
     }
     
-    private function exist($id){
+    protected function exist($id){
         $this->row = $this->model->get($id);
         if(!$this->row){
             $this->flashMessage($this->translator->translate('admin.text.notitemNotExist'), 'error');
