@@ -19,7 +19,7 @@ class Translate extends Column{
     public function output(\Nette\Database\Table\ActiveRow $query) {
         $translateLocale = $query->related('translate_locale')->where('language_id', $this->languageId)->fetch();
         if($translateLocale){
-            parent::output($translateLocale);
+            return parent::output($translateLocale);
         }else{
             return '';
         }
