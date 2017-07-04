@@ -151,7 +151,8 @@ class generateTranslation extends Command
 		if ($this->validate($input, $output) !== TRUE) {
 			return 1;
 		}
-                
+
+        $this->extractor->addExtractor('latte', new Kdyby\Translation\Extractors\LatteExtractor());
         $this->extractor->addExtractor('php', new PhpExtractor());
 
 
@@ -188,19 +189,20 @@ class generateTranslation extends Command
         }
         $this->translates->where('NOT text', $texts)->delete();
 
-        $language = $this->languages->where('translate_locale', $defaultLocale)->fetch();
-        $catalogue = new MessageCatalogue($language['translate_locale']);
-        foreach($this->translates->getAll() as $translate){
-            $translatesLocale = $translate->related('translate_locale')->where('language_id', $language['id'])->fetch();
-            if($translatesLocale){
-                $catalogue->set($translate['text'], $translatesLocale['translate']);
-            }else{
-                $catalogue->set($translate['text'], $translate['text']);
+        foreach($this->languages->getAll() as $language) {
+            $catalogue = new MessageCatalogue($language['translate_locale']);
+            foreach ($this->translates->getAll() as $translate) {
+                $translatesLocale = $translate->related('translate_locale')->where('language_id', $language['id'])->fetch();
+                if ($translatesLocale) {
+                    $catalogue->set($translate['text'], $translatesLocale['translate']);
+                } else {
+                    $catalogue->set($translate['text'], $translate['text']);
+                }
             }
+            $this->writer->writeTranslations($catalogue, 'neon', [
+                'path' => $this->langDir,
+            ]);
         }
-        $this->writer->writeTranslations($catalogue, 'neon', [
-            'path' => $this->langDir,
-        ]);
 
         $this->catalogeCompiler->invalidateCache();
 
