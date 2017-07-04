@@ -89,7 +89,7 @@ class generateTranslation extends Command
 	{
 		$this->setName('cms:translation')
 			->setDescription('Extracts strings from application to translation files')
-			->addOption('scan-dir', 'd', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, "The directory to parse the translations. Can contain %placeholders%.", ['%appDir%/FrontModule'])
+			->addOption('scan-dir', 'd', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, "The directory to parse the translations. Can contain %placeholders%.", ['%appDir%/FrontModule', '%appDir%/model'])
 			->addOption('output-format', 'f', InputOption::VALUE_REQUIRED, "Format name of the messages.", $this->defaultOutputFormat)
 			->addOption('output-dir', 'o', InputOption::VALUE_OPTIONAL, "Directory to write the messages to. Can contain %placeholders%.", $this->defaultOutputDir)
                         ->addOption('lang-dir', 'l', InputOption::VALUE_OPTIONAL, "Directory to write the messages to. Can contain %placeholders%.", '%appDir%/lang');
@@ -152,60 +152,59 @@ class generateTranslation extends Command
 			return 1;
 		}
                 
-                $this->extractor->addExtractor('php', new PhpExtractor());
+        $this->extractor->addExtractor('php', new PhpExtractor());
 
-                
-                $defaultLocale = null;
-                foreach($this->translator->getFallbackLocales() as $locale){
-                    if(is_null($defaultLocale)){
-                        $defaultLocale = $locale;
-                    }
-                    $catalogue = new MessageCatalogue($locale);
-                    $output->writeln(sprintf('<info>Locale %s</info>', $locale));
-                    foreach ($this->scanDirs as $dir) {
-                            $output->writeln(sprintf('<info>Extracting %s</info>', $dir));
-                            $this->extractor->extract($dir, $catalogue);
-                    }
-                }
 
-		$this->writer->writeTranslations($catalogue, $this->outputFormat, [
-                    'path' => $this->outputDir,
-		]);
+        $defaultLocale = null;
+        foreach($this->translator->getFallbackLocales() as $locale){
+            if(is_null($defaultLocale)){
+                $defaultLocale = $locale;
+            }
+            $catalogue = new MessageCatalogue($locale);
+            $output->writeln(sprintf('<info>Locale %s</info>', $locale));
+            foreach ($this->scanDirs as $dir) {
+                    $output->writeln(sprintf('<info>Extracting %s</info>', $dir));
+                    $this->extractor->extract($dir, $catalogue);
+            }
+            $this->writer->writeTranslations($catalogue, $this->outputFormat, [
+                'path' => $this->outputDir,
+            ]);
+        }
 
 		$output->writeln('');
 		$output->writeln(sprintf('<info>Catalogue was written to %s</info>', $this->outputDir));
                 
-                $output->writeln('');
+        $output->writeln('');
 		$output->writeln(sprintf('<info>Zapisuji do DB</info>'));
-                
-                $toTranslate = include dirname(__FILE__) . '/../../../../../temp/lang/messages.' . $defaultLocale . '.php';
-                $texts = array('');
-                foreach($toTranslate as $translate){
-                    $texts[] = $translate;
-                    $trans = $this->translates->where('text', $translate)->fetch();
-                    if(!$trans){
-                        $this->translates->insert(array('text' => $translate));
-                    }
-                }
-                $this->translates->where('NOT text', $texts)->delete();
-                
-                $language = $this->languages->where('translate_locale', $defaultLocale)->fetch();
-                $catalogue = new MessageCatalogue($language['translate_locale']);
-                foreach($this->translates->getAll() as $translate){
-                    $translatesLocale = $translate->related('translate_locale')->where('language_id', $language['id'])->fetch();
-                    if($translatesLocale){
-                        $catalogue->set($translate['text'], $translatesLocale['translate']);
-                    }else{
-                        $catalogue->set($translate['text'], $translate['text']);
-                    }
-                }
-                $this->writer->writeTranslations($catalogue, 'neon', [
-                    'path' => $this->langDir,
-                ]);
-                
-                $this->catalogeCompiler->invalidateCache();
-                
-            	return 0;
+
+        $toTranslate = include $this->serviceLocator->parameters['tempDir'] . '/lang/messages.' . $defaultLocale . '.php';
+        $texts = array('');
+        foreach($toTranslate as $translate){
+            $texts[] = $translate;
+            $trans = $this->translates->where('text', $translate)->fetch();
+            if(!$trans){
+                $this->translates->insert(array('text' => $translate));
+            }
+        }
+        $this->translates->where('NOT text', $texts)->delete();
+
+        $language = $this->languages->where('translate_locale', $defaultLocale)->fetch();
+        $catalogue = new MessageCatalogue($language['translate_locale']);
+        foreach($this->translates->getAll() as $translate){
+            $translatesLocale = $translate->related('translate_locale')->where('language_id', $language['id'])->fetch();
+            if($translatesLocale){
+                $catalogue->set($translate['text'], $translatesLocale['translate']);
+            }else{
+                $catalogue->set($translate['text'], $translate['text']);
+            }
+        }
+        $this->writer->writeTranslations($catalogue, 'neon', [
+            'path' => $this->langDir,
+        ]);
+
+        $this->catalogeCompiler->invalidateCache();
+
+        return 0;
 	}
 
 }
