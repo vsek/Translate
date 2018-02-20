@@ -77,7 +77,7 @@ class TranslatePresenterM extends BasePresenterM{
                 $catalogue->set($translate['text'], $translate['text']);
             }
         }
-        $this->writer->writeTranslations($catalogue, 'neon', [
+        $this->writer->write($catalogue, 'neon', [
             'path' => $this->context->parameters['appDir'] . '/lang/',
         ]);
         
