@@ -1,23 +1,28 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: Vsek
+ * Date: 20.02.2018
+ * Time: 9:53
+ */
 
 namespace App\Console;
 
-use Kdyby;
-use Nette;
+
+use App\Model\Module\Language;
+use App\Model\Module\Translate;
+use App\Translate\Extractor\PhpExtractor;
+use Kdyby\Translation\CatalogueCompiler;
+use Kdyby\Translation\MessageCatalogue;
+use Kdyby\Translation\Translator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Kdyby\Translation\MessageCatalogue;
-use App\Translate\Extractor\PhpExtractor;
-use Tracy\Debugger;
+use Symfony\Component\Translation\Extractor\ChainExtractor;
+use Symfony\Component\Translation\Writer\TranslationWriter;
 
-/**
- * Description of generateTranslation
- *
- * @author vsek
- */
-class generateTranslation extends Command
+class generateTranslationCommnad extends Command
 {
 
     /**
@@ -26,7 +31,7 @@ class generateTranslation extends Command
     public $defaultOutputDir = '%tempDir%/lang';
 
     /**
-     * @var Kdyby\Translation\Translator
+     * @var Translator
      */
     private $translator;
 
@@ -86,6 +91,18 @@ class generateTranslation extends Command
      */
     private $catalogeCompiler;
 
+    public function __construct(string $name = null, Translator $translator, TranslationWriter $writer, ChainExtractor $extractor, Translate $translates, Language $languages, CatalogueCompiler $catalogeCompiler)
+    {
+        parent::__construct($name);
+
+        $this->translator = $translator;
+        $this->writer = $writer;
+        $this->extractor = $extractor;
+        $this->translates = $translates;
+        $this->languages = $languages;
+        $this->catalogeCompiler = $catalogeCompiler;
+    }
+
     protected function configure()
     {
         $this->setName('cms:translation')
@@ -96,21 +113,6 @@ class generateTranslation extends Command
             ->addOption('lang-dir', 'l', InputOption::VALUE_OPTIONAL, "Directory to write the messages to. Can contain %placeholders%.", '%appDir%/lang');
         // todo: append
     }
-
-
-
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $this->translator = $this->getHelper('container')->getByType('Kdyby\Translation\Translator');
-        $this->writer = $this->getHelper('container')->getByType('Symfony\Component\Translation\Writer\TranslationWriter');
-        $this->extractor = $this->getHelper('container')->getByType('Symfony\Component\Translation\Extractor\ChainExtractor');
-        $this->translates = $this->getHelper('container')->getByType('App\Model\Module\Translate');
-        $this->languages = $this->getHelper('container')->getByType('App\Model\Module\Language');
-        $this->catalogeCompiler = $this->getHelper('container')->getByType('Kdyby\Translation\CatalogueCompiler');
-        $this->serviceLocator = $this->getHelper('container')->getContainer();
-    }
-
-
 
     protected function validate(InputInterface $input, OutputInterface $output)
     {
@@ -149,6 +151,9 @@ class generateTranslation extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+
+        $this->serviceLocator = $this->getHelper('container')->getContainer();
+
         if ($this->validate($input, $output) !== TRUE) {
             return 1;
         }
@@ -170,7 +175,7 @@ class generateTranslation extends Command
             }
         }
 
-        $this->writer->writeTranslations($catalogue, $this->outputFormat, [
+        $this->writer->write($catalogue, $this->outputFormat, [
             'path' => $this->outputDir,
         ]);
 
@@ -202,7 +207,7 @@ class generateTranslation extends Command
                     $catalogue->set($translate['text'], $translate['text']);
                 }
             }
-            $this->writer->writeTranslations($catalogue, 'neon', [
+            $this->writer->write($catalogue, 'neon', [
                 'path' => $this->langDir,
             ]);
         }
@@ -211,5 +216,4 @@ class generateTranslation extends Command
 
         return 0;
     }
-
 }
