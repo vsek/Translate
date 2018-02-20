@@ -184,7 +184,7 @@ class generateTranslation extends Command
         $texts = array('');
         foreach($toTranslate as $translate){
             $texts[] = $translate;
-            $trans = $this->translates->where('text', $translate)->fetch();
+            $trans = $this->translates->where('BINARY text = ?', $translate)->fetch();
             if(!$trans){
                 $this->translates->insert(array('text' => $translate));
             }
